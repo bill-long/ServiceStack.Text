@@ -107,66 +107,74 @@ namespace ServiceStack.Text
                     if (!isLiteralQuote)
                         break;
                 }
+
                 return value.Substring(tokenStartPos, i - tokenStartPos);
             }
-            if (valueChar == JsWriter.MapStartChar) //Is Type/Map, i.e. {...}
+
+            if (!CsvConfig.ParseJsv.HasValue || CsvConfig.ParseJsv.Value)
             {
-                while (++i < valueLength && endsToEat > 0)
+                if (valueChar == JsWriter.MapStartChar) //Is Type/Map, i.e. {...}
                 {
-                    valueChar = value[i];
+                    while (++i < valueLength && endsToEat > 0)
+                    {
+                        valueChar = value[i];
 
-                    if (valueChar == JsWriter.QuoteChar)
-                        withinQuotes = !withinQuotes;
+                        if (valueChar == JsWriter.QuoteChar)
+                            withinQuotes = !withinQuotes;
 
-                    if (withinQuotes)
-                        continue;
+                        if (withinQuotes)
+                            continue;
 
-                    if (valueChar == JsWriter.MapStartChar)
-                        endsToEat++;
+                        if (valueChar == JsWriter.MapStartChar)
+                            endsToEat++;
 
-                    if (valueChar == JsWriter.MapEndChar)
-                        endsToEat--;
+                        if (valueChar == JsWriter.MapEndChar)
+                            endsToEat--;
+                    }
+
+                    if (endsToEat > 0)
+                    {
+                        //Unmatched start and end char, give up
+                        i = tokenStartPos;
+                        valueChar = value[i];
+                    }
+                    else
+                        return value.Substring(tokenStartPos, i - tokenStartPos);
                 }
-                if (endsToEat > 0)
-                { 
-                    //Unmatched start and end char, give up
-                    i = tokenStartPos;
-                    valueChar = value[i];
-                }
-                else
-                    return value.Substring(tokenStartPos, i - tokenStartPos);
-            }
-            if (valueChar == JsWriter.ListStartChar) //Is List, i.e. [...]
-            {
-                while (++i < valueLength && endsToEat > 0)
+
+                if (valueChar == JsWriter.ListStartChar) //Is List, i.e. [...]
                 {
-                    valueChar = value[i];
+                    while (++i < valueLength && endsToEat > 0)
+                    {
+                        valueChar = value[i];
 
-                    if (valueChar == JsWriter.QuoteChar)
-                        withinQuotes = !withinQuotes;
+                        if (valueChar == JsWriter.QuoteChar)
+                            withinQuotes = !withinQuotes;
 
-                    if (withinQuotes)
-                        continue;
+                        if (withinQuotes)
+                            continue;
 
-                    if (valueChar == JsWriter.ListStartChar)
-                        endsToEat++;
+                        if (valueChar == JsWriter.ListStartChar)
+                            endsToEat++;
 
-                    if (valueChar == JsWriter.ListEndChar)
-                        endsToEat--;
+                        if (valueChar == JsWriter.ListEndChar)
+                            endsToEat--;
+                    }
+
+                    if (endsToEat > 0)
+                    {
+                        //Unmatched start and end char, give up
+                        i = tokenStartPos;
+                        valueChar = value[i];
+                    }
+                    else
+                        return value.Substring(tokenStartPos, i - tokenStartPos);
                 }
-                if (endsToEat > 0)
-                {
-                    //Unmatched start and end char, give up
-                    i = tokenStartPos;
-                    valueChar = value[i];
-                }
-                else
-                    return value.Substring(tokenStartPos, i - tokenStartPos);
             }
 
             //if value starts with MapStartChar, check MapEndChar to terminate
             char specEndChar = itemSeperator;
-            if (value[tokenStartPos] == JsWriter.MapStartChar)
+            if (value[tokenStartPos] == JsWriter.MapStartChar && (!CsvConfig.ParseJsv.HasValue || CsvConfig.ParseJsv.Value))
                 specEndChar = JsWriter.MapEndChar;
 
             while (++i < valueLength) //Is Value

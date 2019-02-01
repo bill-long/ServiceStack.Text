@@ -102,6 +102,19 @@ namespace ServiceStack.Text
             }
         }
 
+        [ThreadStatic]
+        private static bool? tsParseJsv;
+        private static bool? sParseJsv;
+        public static bool? ParseJsv
+        {
+            get => tsParseJsv ?? sParseJsv ?? true;
+            set
+            {
+                tsParseJsv = value;
+                if (sParseJsv == null) sParseJsv = value;
+            }
+        }
+
         public static void Reset()
         {
             tsItemSeperatorString = sItemSeperatorString = null;
